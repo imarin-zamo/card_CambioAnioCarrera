@@ -5,7 +5,8 @@ import {
     Switch,
     Route
 } from 'react-router-dom';
-import Home from './Home';
+//import Home from './Home';
+import ProcessAcademic from '../Components/ProcessAcademic';
 
 // for more information on react router: https://v5.reactrouter.com/web/guides/quick-start
 
@@ -14,7 +15,7 @@ const RouterPage = (props) => {
         <Router basename={props.pageInfo.basePath}>
             <Switch>
                 <Route path='/'>
-                    <Home {...props} />
+                    <ProcessAcademic {...props} />
                 </Route>
             </Switch>
         </Router>
