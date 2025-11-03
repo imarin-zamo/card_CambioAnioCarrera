@@ -9,7 +9,7 @@ module.exports = {
         description: 'Esta tarjeta realizar el cambio de año de carrera del estudiante.',
         pageRoute: {
             route: '/',
-            excludeClickSelectors: ['a','button','#Content']
+            excludeClickSelectors: ['#Content']
         },
         // configuration: {
         //     client: [{

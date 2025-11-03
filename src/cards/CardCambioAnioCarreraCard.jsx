@@ -2,7 +2,7 @@ import React from 'react';
 import { withStyles } from '@ellucian/react-design-system/core/styles';
 import { spacing40 } from '@ellucian/react-design-system/core/styles/tokens';
 //import { Calendar, ChevronRight } from '@ellucian/ds-icons/lib';
-import { Button} from '@ellucian/react-design-system/core';
+import { Button } from '@ellucian/react-design-system/core';
 import PropTypes from 'prop-types';
 
 const styles = () => ({
@@ -19,12 +19,22 @@ const CardCambioAnioCarreraCard = (props) => {
 
     return (
         <div>
-           
+
             <div className={classes.card}>
                 <p>
                     Está tarjeta permite realizar diferentes procesos académicos
                 </p>
-                <Button>Ir a procesos académicos</Button>
+                <br/>
+                <br/>
+
+                <Button
+                    color="primary"
+                    fluid
+                    size="large"
+                    variant="contained"
+                >
+                    Ir a procesos académicos
+                </Button>
             </div>
         </div>
     );
