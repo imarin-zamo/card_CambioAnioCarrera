@@ -22,7 +22,7 @@ const CardCambioAnioCarreraCard = (props) => {
 
             <div className={classes.card}>
                 <p>
-                    Está tarjeta permite realizar diferentes procesos académicos
+                    Está tarjeta permite realizar diferentes procesos académicos masivos.
                 </p>
                 <br/>
                 <br/>

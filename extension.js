@@ -6,7 +6,7 @@ module.exports = {
         source: './src/cards/CardCambioAnioCarreraCard',
         title: 'CardCambioAnioCarrera Card',
         displayCardType: 'CardCambioAnioCarrera Card',
-        description: 'Esta tarjeta realizar el cambio de año de carrera del estudiante.',
+        description: 'Esta tarjeta realizar el cambio de año de la carrera del estudiante.',
         pageRoute: {
             route: '/',
             excludeClickSelectors: ['#Content']
