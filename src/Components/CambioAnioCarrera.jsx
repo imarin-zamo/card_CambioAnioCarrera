@@ -2,11 +2,12 @@
 import React, { useState } from 'react';
 
 import { withStyles } from '@ellucian/react-design-system/core/styles';
-import { spacing40
-     //spacing50, spacing60,
- } from '@ellucian/react-design-system/core/styles/tokens';
+import {
+    spacing40
+    //spacing50, spacing60,
+} from '@ellucian/react-design-system/core/styles/tokens';
 //import { Calendar, ChevronRight } from '@ellucian/ds-icons/lib';
-import { Autocomplete, Button, Grid,  } from '@ellucian/react-design-system/core'; //Alert, Card, CardHeader, INLINE_VARIANT
+import { Autocomplete, Button, Grid, } from '@ellucian/react-design-system/core'; //Alert, Card, CardHeader, INLINE_VARIANT
 import PropTypes from 'prop-types';
 
 const styles = () => ({
@@ -69,7 +70,7 @@ const CambioAnioCarrera = (props) => {
 
             <Grid container className={classes.card} spacing={spacing}>
                 <Grid item xs={12}>
-                    <h2 className='Center'>Seleccione los siguientes parámetros para realizar el cambio de año de carrera</h2>
+                    <h3 className='Center'>Seleccione los siguientes parámetros para realizar el cambio de año de carrera</h3>
                 </Grid>
                 <Grid item xs={12} sm={2} md={4}>
                     {/* Ejemplo de combobox */}
@@ -120,7 +121,7 @@ const CambioAnioCarrera = (props) => {
                 fluid
                 size="large"
                 variant="contained"
-                
+
             >
                 Realizar el cambio de año de estudiantes
             </Button>
