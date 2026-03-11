@@ -1,14 +1,14 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { withStyles } from '@ellucian/react-design-system/core/styles';
-import {
-    spacing40
-    //spacing50, spacing60,
-} from '@ellucian/react-design-system/core/styles/tokens';
+import { spacing40 } from '@ellucian/react-design-system/core/styles/tokens';
 //import { Calendar, ChevronRight } from '@ellucian/ds-icons/lib';
-import { Autocomplete, Button, Grid, } from '@ellucian/react-design-system/core'; //Alert, Card, CardHeader, INLINE_VARIANT
+import { Autocomplete, Button, Grid, TextField } from '@ellucian/react-design-system/core'; //Alert, Card, CardHeader, INLINE_VARIANT
 import PropTypes from 'prop-types';
+import { useZamoranoData } from '../hooks/useZamoranoData';
+import Error from "../Components/Error";
+import Loading from "../Components/Loading";
 
 const styles = () => ({
     card: {
@@ -17,49 +17,71 @@ const styles = () => ({
         marginBottom: 0,
         marginLeft: spacing40
     },
-    // inline: {
-    //     marginTop: spacing60,
-    // },
-    // inlineAlert: {
-    //     marginBottom: spacing50,
-    // }
+
 });
 
 
 
 const CambioAnioCarrera = (props) => {
     const { classes } = props;
-    const [spacing, setSpacing] = React.useState(2);
-
-    // Manejar los state del modulo
-    const [value, setValue] = useState(null);
-    const [error, setError] = useState(false);
-    const [helperText, setHelperText] = useState();
-
-    // const alertText = 'Se está procesando el cambio de año de carrera de los estudiantes.';
-    // const errorText = 'There was an error processing your update.';
-    // const { open, openPersistent } = this.state;
-    // const customId = 'AlertInlineExample';
-
-    console.log('CambioAnioCarrera props', classes);
 
 
-    const onChange = (event, newValue) => {
-        setValue(newValue);
-        setSpacing(Number(event.target.value));
-        this.setState({ open: true });
+    const getLevels = useZamoranoData();
+    const getPrograms = useZamoranoData();
+    const getTerms = useZamoranoData();
+
+    const [selectLevel, setSelectLevel] = useState(null);
+    const [selectPrograms, setSelectPrograms] = useState(null);
+    const [selectTerm, setSelectTerm] = useState(null);
+
+    const levelList = Array.isArray(getLevels.data) ? getLevels.data : [];
+    const programsList = Array.isArray(getPrograms.data) ? getPrograms.data : [];
+    const termsList = Array.isArray(getTerms.data) ? getTerms.data : [];
+
+    useEffect(() => {
+        getLevels.execute('/RT/v1/academic-levels', { method: 'GET' });
+        getTerms.execute('/RT/v1/academic-periods', { method: 'GET' });
+    }, []);
+
+
+    useEffect(() => {
+        if (selectLevel) {
+            getPrograms.execute('/RT/v1/academic-programs', { method: 'GET' });
+        }
+    }, [selectLevel]);
+
+    useEffect(() => {
+        if (selectTerm && selectPrograms) {
+            document.getElementById('btnCambioAnioCarrera').disabled = true;
+        }
+    }, [selectTerm, selectPrograms]);
+
+
+    const handleLevelChange = (event, newValue) => {
+        setSelectLevel(newValue);
+        if (newValue) {
+            //  getPrograms.execute('/RT/v1/academic-programs', { method: 'GET' });
+            // console.log('level in handleLevelChange', level);
+        }
     };
 
-    const onBlur = () => {
-        setError(!value);
-        setHelperText(!value ? 'A selection is required' : undefined);
+    const handleProgramsChange = (event, newValue) => {
+        setSelectPrograms(newValue);
+        if (newValue) {
+            //  getPrograms.execute('/RT/v1/academic-programs', { method: 'GET' });
+            //console.log('programs in handleProgramsChange', selectPrograms);
+        }
     };
 
-    //const handleClose = () => {
-    //    this.setState({ open: false });
-    //};
+    const handleTermChange = (event, newValue) => {
+        setSelectTerm(newValue);
+        if (newValue) {
+            //  getPrograms.execute('/RT/v1/academic-programs', { method: 'GET' });
+            // console.log('term in handleTermChange', selectTerm);
+        }
+    };
 
-
+    console.log('classes', classes)
     return (
         <div className='columns-4xs'>
             {/* <Typography variant="h4"></Typography> */}
@@ -67,88 +89,104 @@ const CambioAnioCarrera = (props) => {
                 Esta tarjeta permite realizar el cambio de año de carrera de los estudiantes,
                 se debe de hacer despues de haber realizado el cierre de periodo académico y ejecutado el CAPP para cada programa academico, que desea hacer el cambio.
             </p>
+            <div>
+                <h3 className='Center'>Seleccione los siguientes parámetros para realizar el cambio de año de carrera</h3>
+            </div>
+            {getLevels.loading && <Loading />}
+            {getLevels.error && <Error alertText={getLevels.error} variant='inline' />}
 
-            <Grid container className={classes.card} spacing={spacing}>
-                <Grid item xs={12}>
-                    <h3 className='Center'>Seleccione los siguientes parámetros para realizar el cambio de año de carrera</h3>
+            {getLevels.data && getTerms.data && (
+
+                <Grid container spacing={4}>
+
+                    <Grid item xs={12} sm={4}>
+                        <Autocomplete
+                            id="level"
+                            options={levelList}
+                            getOptionLabel={(option) => {
+                                if (!option) return "";
+                                if (typeof option === 'string') return option;
+                                return option.title ? `${option.code} - ${option.title}` : "";
+                            }}
+                            value={selectLevel}
+                            onChange={handleLevelChange}
+                            fullWidth
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Nivel académico"
+                                    placeholder="Escriba para filtrar..."
+                                    variant="outlined"
+                                />
+                            )}
+                        />
+                    </Grid>
+                    <Grid item xs={12} sm={4}>
+                        <Autocomplete
+                            id="programs"
+                            value={selectPrograms}
+                            // Aquí filtramos dinámicamente la lista de programas
+                            options={selectLevel ? programsList.filter(p => p.academicLevel?.id === selectLevel.id) : []}
+                            getOptionLabel={(option) => option ? (option.code + ' - ' + option.title) : ''}
+                            fullWidth
+                            onChange={handleProgramsChange}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Programa académico"
+                                    placeholder="Escriba para filtrar..."
+                                    variant="outlined"
+                                />
+                            )}
+                        />
+                    </Grid>
+                    <Grid item xs={12} sm={4}>
+                        <Autocomplete
+                            id="term"
+                            value={selectTerm}
+                            options={termsList.filter(t => {
+                                // validar que el periodo este abierto y que la fecha de fin no haya pasado    "registration": "open",  "endOn": "2026-04-30T00:00:00+00:00",
+                                if (t.registration !== 'open') return false;
+                                if (!t.endOn) return false;
+                                const endDate = new Date(t.endOn);
+                                const today = new Date();
+                                // Solo evaluar la fecha
+                                endDate.setHours(0, 0, 0, 0);
+                                today.setHours(0, 0, 0, 0);
+                                return endDate >= today;
+                            })}
+                            getOptionLabel={(option) => option ? (option.code + ' - ' + option.title) : ''}
+                            fullWidth
+                            label="Periodo académico"
+                            onChange={handleTermChange}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Periodo académico"
+                                    placeholder="Escriba para filtrar..."
+                                    variant="outlined"
+                                />
+                            )}
+                        />
+                    </Grid>
                 </Grid>
-                <Grid item xs={12} sm={2} md={4}>
-                    {/* Ejemplo de combobox */}
-                    <Autocomplete
-                        id="level"
-                        options={SUGGESTIONS_SAMPLE_DATA_LEVEL}
-                        requerido
-                        error={error}
-                        helperText={helperText + ' del nivel académico'}
-                        label="Nivel académico"
-                        value={value}
-                        onChange={onChange}
-                        onBlur={onBlur}
-                    />
-                </Grid>
-                <Grid item xs={12} sm={4} md={4}>
-                    <Autocomplete
-                        id="programs"
-                        options={SUGGESTIONS_SAMPLE_DATA_PROGRAMS}
-                        requerido
-                        error={error}
-                        helperText={helperText + ' de los programas'}
-                        label="Carrera"
-                        value={value}
-                        onChange={onChange}
-                        onBlur={onBlur}
-                    />
-                </Grid>
-                <Grid item xs={12} sm={4} md={4}>
-                    <Autocomplete
-                        id="term"
-                        options={SUGGESTIONS_SAMPLE_DATA_TERM}
-                        requerido
-                        error={error}
-                        helperText={helperText + ' del periodo académico'}
-                        label="Periodo académico"
-                        value={value}
-                        onChange={onChange}
-                        onBlur={onBlur}
-                    />
-                </Grid>
-            </Grid>
+            )}
             <br />
 
-
             <Button
+                id="btnCambioAnioCarrera"
                 color="primary"
                 fluid
                 size="large"
                 variant="contained"
-
+                disabled={!selectLevel || !selectPrograms || !selectTerm}
             >
                 Realizar el cambio de año de estudiantes
             </Button>
 
-            {/* <Card className={classes.inline} id={`${customId}_Card`}>
-                <Alert
-                    alertType="warning"
-                    className={classes.inlineAlert}
-                    id={`${customId}_Alert`}
-                    open={open}
-                    onClose={handleClose}
-                    text={alertText}
-                    variant={INLINE_VARIANT}
-                />
-                <Alert
-                    alertType="error"
-                    className={classes.inlineAlert}
-                    open={openPersistent}
-                    userDismissable={false}
-                    text={errorText}
-                    variant={INLINE_VARIANT}
-                />
-                <CardHeader
-                    id={`${customId}_CardHeader`}
-                    title="Header Content"
-                />
-            </Card> */}
+
+
+
         </div>
     );
 };
@@ -157,33 +195,5 @@ CambioAnioCarrera.propTypes = {
     classes: PropTypes.object.isRequired
 };
 
-const SUGGESTIONS_SAMPLE_DATA_LEVEL = [
-    { label: 'LI - LICENCIATURA' },
-    { label: 'MA - MAESTRIA' },
-    { label: 'DO - DOCTORADO' },
-    { label: 'TE - TECNICOS' }
-];
 
-const SUGGESTIONS_SAMPLE_DATA_PROGRAMS = [
-    { label: '18AGI - AGROINDUSTRIA ALIMENTARIA' },
-    { label: '18AGN - ADMINISTRACION DE AGRONEGOCIOS' },
-    { label: '18IAD - AMBIENTE Y DESARROLLO' },
-    { label: '18CIA - INGENIERIA AGRONOMICA' },
-    { label: 'MACAFE - MAE EN CAFICULTURA Y NEGOCIOS' },
-    { label: 'MAGN - MAESTRIA EN AGRONEGOCIOS' },
-    { label: 'MANU - MAESTRIA EN NUTRICION' },
-    { label: 'MATS - AGRI TROPICAL SOSTENIBLE' },
-    { label: 'MEAGN - MAE EJECUTIVA EN AGRONEGOCIOS' },
-];
-
-const SUGGESTIONS_SAMPLE_DATA_TERM = [
-    { label: '202510 - LI' },
-    { label: '202520 - LI' },
-    { label: '202530 - LI' },
-    { label: '202540 - MA' },
-    { label: '202550 - MA' },
-    { label: '202560 - MA' },
-    { label: '202580 - DO' },
-    { label: '202590 - DO' },
-];
 export default withStyles(styles)(CambioAnioCarrera);
