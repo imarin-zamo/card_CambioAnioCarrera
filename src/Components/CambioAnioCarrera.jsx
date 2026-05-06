@@ -41,6 +41,7 @@ const CambioAnioCarrera = (props) => {
     useEffect(() => {
         getLevels.execute('/RT/v1/academic-levels', { method: 'GET' });
         getTerms.execute('/RT/v1/academic-periods', { method: 'GET' });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
 
@@ -48,6 +49,7 @@ const CambioAnioCarrera = (props) => {
         if (selectLevel) {
             getPrograms.execute('/RT/v1/academic-programs', { method: 'GET' });
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectLevel]);
 
     useEffect(() => {

@@ -3,64 +3,46 @@ import PropTypes from 'prop-types';
 //importacion de componentes de ellucian
 import { Button, Autocomplete, TextField, Grid, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@ellucian/react-design-system/core';
 import { useZamoranoData } from '../hooks/useZamoranoData';
-import Error from "../Components/Error";
-import Loading from "../Components/Loading";
+import CustomDataGrid from './CustomDataGrid';
+import Loading from './Loading';
 
-const Concentradora = (props) => {
-    const { Classes } = props;
+const Concentradora = () => {
 
-    const getLevels = useZamoranoData();
     const getPrograms = useZamoranoData();
     const getTerms = useZamoranoData();
-    const getAreas = useZamoranoData();
+    const getCalculateConcentradora = useZamoranoData();
 
-    const [level, setlevel] = useState(null);
     const [selectPrograms, setSelectPrograms] = useState(null);
     const [selectTerm, setSelectTerm] = useState(null);
-    const [selectArea, setSelectArea] = useState(null);
     const [openDialog, setOpenDialog] = useState(false);
-    // Como useZamoranoData ya devuelve json.response internamente, getLevels.data ya es el arreglo
 
-    const levelList = Array.isArray(getLevels.data) ? getLevels.data : [];
-    const programsList = Array.isArray(getPrograms.data) ? getPrograms.data : [];
+    const programsData = Array.isArray(getPrograms.data) ? getPrograms.data : [];
+    const programsList = programsData.filter(program => {
+        const code = program.code || '';
+
+        const is18OrL = code.startsWith('18') || code.startsWith('L');
+
+        const hasCorrectLevel = program.academicLevel && program.academicLevel.id === 'a3e98c81-44bf-4087-b192-771c4ac6c608';
+
+        return is18OrL && hasCorrectLevel;
+    });
     const termsList = Array.isArray(getTerms.data) ? getTerms.data : [];//getTerms.data && getTerms.data.response ? getTerms.data.response : [];
-    const areasList = Array.isArray(getAreas.data) ? getAreas.data : [];
+
+    console.log('getPrograms', programsList);
 
     useEffect(() => {
-        getLevels.execute('/RT/v1/academic-levels', { method: 'GET' });
+        //getLevels.execute('/RT/v1/academic-levels', { method: 'GET' });
         getTerms.execute('/RT/v1/academic-periods', { method: 'GET' });
+        getPrograms.execute('/RT/v1/academic-programs', { method: 'GET' });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-
-    useEffect(() => {
-        if (level) {
-            getPrograms.execute('/RT/v1/academic-programs', { method: 'GET' });
-        }
-    }, [level]);
-
-    useEffect(() => {
-        if (selectTerm && selectPrograms) {
-            getAreas.execute(`/RT/v1/program-requirements-program-area-attachments?keyblckTermCode=${selectTerm.code}&programs=${selectPrograms.code}`, { method: 'GET' });
-        }
-    }, [selectTerm, selectPrograms]);
-
-
-
-    console.log('Concentradora props', Classes);
     //eventos de los combobox
-
-    const handleLevelChange = (event, newValue) => {
-        setlevel(newValue);
-        if (newValue) {
-            //  getPrograms.execute('/RT/v1/academic-programs', { method: 'GET' });
-            // console.log('level in handleLevelChange', level);
-        }
-    };
 
     const handleProgramsChange = (event, newValue) => {
         setSelectPrograms(newValue);
         if (newValue) {
-            //  getPrograms.execute('/RT/v1/academic-programs', { method: 'GET' });
+            // getPrograms.execute('/RT/v1/academic-programs', { method: 'GET' });
             //console.log('programs in handleProgramsChange', selectPrograms);
         }
     };
@@ -73,14 +55,51 @@ const Concentradora = (props) => {
         }
     };
 
-    const handleAreaChange = (event, newValue) => {
-        setSelectArea(newValue);
-        if (newValue) {
-            //  getPrograms.execute('/RT/v1/academic-programs', { method: 'GET' });
-            btnRegistrar.disabled = true;
+    useEffect(() => {
+        if (selectPrograms && selectTerm) {
+            // "para ejectos de la prueba agrega el filtro a periodo 202520 que sea el filtro que ya tenemos o 202520 esto solo como pruebas."
+            const periodo = '202520';
+            const programa = selectPrograms.code;
+            getCalculateConcentradora.execute(`/ZA/v1/History/ResgisterConcentratorHistoryAcacemic?periodo=${periodo}&programa=${programa}`, { method: 'POST' });
         }
-    };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectPrograms, selectTerm]);
+    console.log('getCalculateConcentradora', getCalculateConcentradora.data);
 
+    const columns = [
+        { field: 'bannerd', headerName: 'Banner Id' },
+        { field: 'name', headerName: 'Nombre' },
+        {
+            field: 'module',
+            headerName: 'Módulos (Código / Nota)',
+            isSubCell: true,
+            renderCell: (row, classes) => {
+                if (!row.module || !row.module.length) return null;
+                return (
+                    <div className={classes.subCellContainer}>
+                        {row.module.map((mod, idx) => {
+                            const isLast = idx === row.module.length - 1;
+                            return (
+                                <div key={idx} className={isLast ? classes.subCellRowLast : classes.subCellRow}>
+                                    <div className={classes.subCellItemBordered}>{mod.codeModule}</div>
+                                    <div className={classes.subCellItem}>{mod.grade}</div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                );
+            }
+        },
+        { field: 'newCourseHistory', headerName: 'Módulo AH' },
+        { field: 'averageNumbersModules', headerName: 'Promedio Módulos' }
+    ];
+
+    let gridData = [];
+    if (Array.isArray(getCalculateConcentradora.data)) {
+        gridData = getCalculateConcentradora.data;
+    } else if (getCalculateConcentradora.data?.items?.response) {
+        gridData = getCalculateConcentradora.data.items.response;
+    }
 
     return (
         <div>
@@ -94,41 +113,15 @@ const Concentradora = (props) => {
                     y ejecutado el CAPP  <strong>Se migrarán las materias concentradoras a los historiales académicos de los estudiantes</strong>
                 </p>
 
-
-                {getLevels.loading && <Loading />}
-                {getLevels.error && <Error alertText={getLevels.error} variant='inline' />}
-
-                {getLevels.data && getTerms.data && (
+                {programsList && termsList && (
                     <Grid container spacing={4}>
 
-                        <Grid item xs={12} sm={6}>
-                            <Autocomplete
-                                id="level"
-                                options={levelList}
-                                getOptionLabel={(option) => {
-                                    if (!option) return "";
-                                    if (typeof option === 'string') return option;
-                                    return option.title ? `${option.code} - ${option.title}` : "";
-                                }}
-                                value={level}
-                                onChange={handleLevelChange}
-                                fullWidth
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        label="Buscar el nivel académico"
-                                        placeholder="Escriba para filtrar..."
-                                        variant="outlined"
-                                    />
-                                )}
-                            />
-                        </Grid>
                         <Grid item xs={12} sm={6}>
                             <Autocomplete
                                 id="programs"
                                 value={selectPrograms}
                                 // Aquí filtramos dinámicamente la lista de programas
-                                options={level ? programsList.filter(p => p.academicLevel?.id === level.id) : []}
+                                options={programsList}
                                 getOptionLabel={(option) => option ? (option.code + ' - ' + option.title) : ''}
                                 fullWidth
                                 onChange={handleProgramsChange}
@@ -171,31 +164,18 @@ const Concentradora = (props) => {
                                 )}
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <Autocomplete
-                                id="area"
-                                value={selectArea}
-                                //filtrar las areas que empiecen con AH
-                                options={areasList ? areasList.flatMap(a => a.SMRPAAP || []).filter(item => item.area && item.area.startsWith('AH')) : []}
-                                getOptionLabel={(option) => option ? (option.area + ' - Aprender Haciendo ' + option.area.substring(2, 3).toUpperCase() + option.area.substring(3)) : ''}
-                                fullWidth
-                                label="Area académica"
-                                onChange={handleAreaChange}
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        label="Buscar el area académica"
-                                        placeholder="Escriba para filtrar..."
-                                        variant="outlined"
-                                    />
-                                )}
-                            />
-                        </Grid>
 
                     </Grid>
                 )}
                 <br />
             </div>
+
+            {getCalculateConcentradora.loading && <Loading />}
+            {!getCalculateConcentradora.loading && gridData.length > 0 && (
+                <div style={{ marginTop: '20px', marginBottom: '20px' }}>
+                    <CustomDataGrid columns={columns} data={gridData} loading={getCalculateConcentradora.loading} />
+                </div>
+            )}
 
             <Button
                 id="btnRegistrar"
@@ -204,7 +184,7 @@ const Concentradora = (props) => {
                 size="large"
                 variant="contained"
                 onClick={() => setOpenDialog(true)}
-                disabled={!selectArea}
+                disabled={!selectTerm || !selectPrograms}
             >
                 Registrar materias concentradoras en historiales académicos
             </Button>
