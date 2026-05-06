@@ -69,6 +69,8 @@ const Concentradora = () => {
     const columns = [
         { field: 'bannerd', headerName: 'Banner Id' },
         { field: 'name', headerName: 'Nombre' },
+        { field: 'averageNumbersModules', headerName: 'Módulos evaluados' },
+        { field: 'area', headerName: 'Area' },
         {
             field: 'module',
             headerName: 'Módulos (Código / Nota)',
@@ -81,17 +83,18 @@ const Concentradora = () => {
                             const isLast = idx === row.module.length - 1;
                             return (
                                 <div key={idx} className={isLast ? classes.subCellRowLast : classes.subCellRow}>
-                                    <div className={classes.subCellItemBordered}>{mod.codeModule}</div>
+                                    <div className={classes.subCellItemBordered}>{mod.codeModule + " - " + mod.nameModule}</div>
                                     <div className={classes.subCellItem}>{mod.grade}</div>
                                 </div>
                             );
                         })}
                     </div>
                 );
-            }
+            },
         },
-        { field: 'newCourseHistory', headerName: 'Módulo AH' },
-        { field: 'averageNumbersModules', headerName: 'Promedio Módulos' }
+        { field: 'newCourseHistory', headerName: 'Código del curso' },
+        { field: 'newCourseHistoryName', headerName: 'Nombre del curso' },
+        { field: 'grade', headerName: 'Nota' }
     ];
 
     let gridData = [];
