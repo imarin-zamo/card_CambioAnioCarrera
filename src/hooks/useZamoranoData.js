@@ -44,11 +44,8 @@ export function useZamoranoData() {
                 // ----------------------------
 
                 if (!response.ok) {
-                    throw new Error(`Error ${json.status}: ${json.response}`);
-                }
-
-                if (!response.ok) {
-                    throw new Error(`Error ${json.status}: ${json.response}`);
+                    const errorMsg = json.message || json.response || `Error ${json.status}`;
+                    throw new Error(errorMsg);
                 }
 
                 const responseData = json.response;

@@ -17,6 +17,7 @@ const Concentradora = () => {
     const [openDialog, setOpenDialog] = useState(false);
 
     const programsData = Array.isArray(getPrograms.data) ? getPrograms.data : [];
+
     const programsList = programsData.filter(program => {
         const code = program.code || '';
 
@@ -24,11 +25,12 @@ const Concentradora = () => {
 
         const hasCorrectLevel = program.academicLevel && program.academicLevel.id === 'a3e98c81-44bf-4087-b192-771c4ac6c608';
 
-        return is18OrL && hasCorrectLevel;
+        const hasSites = program.sites && Array.isArray(program.sites) && program.sites.length > 0;
+
+        return is18OrL && hasCorrectLevel && hasSites;
     });
     const termsList = Array.isArray(getTerms.data) ? getTerms.data : [];//getTerms.data && getTerms.data.response ? getTerms.data.response : [];
 
-    console.log('getPrograms', programsList);
 
     useEffect(() => {
         //getLevels.execute('/RT/v1/academic-levels', { method: 'GET' });
@@ -64,27 +66,33 @@ const Concentradora = () => {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectPrograms, selectTerm]);
+
     console.log('getCalculateConcentradora', getCalculateConcentradora.data);
 
+    console.log('selectPrograms', selectPrograms);
+
     const columns = [
-        { field: 'bannerd', headerName: 'Banner Id' },
-        { field: 'name', headerName: 'Nombre' },
-        { field: 'averageNumbersModules', headerName: 'Módulos evaluados' },
-        { field: 'area', headerName: 'Area' },
+        { field: 'bannerd', headerName: 'Banner Id', align: 'center', width: '120px' },
+        { field: 'name', headerName: 'Nombre', minWidth: '300px' },
+        { field: 'averageNumbersModules', headerName: 'Módulos evaluados', align: 'center', width: '180px' },
+        { field: 'area', headerName: 'Area', align: 'center', width: '100px' },
         {
             field: 'module',
             headerName: 'Módulos (Código / Nota)',
             isSubCell: true,
+            minWidth: '500px',
+            headerAlign: 'center',
             renderCell: (row, classes) => {
                 if (!row.module || !row.module.length) return null;
                 return (
                     <div className={classes.subCellContainer}>
                         {row.module.map((mod, idx) => {
                             const isLast = idx === row.module.length - 1;
+                            const gradeFormat = mod.grade !== undefined && mod.grade !== null ? Number(mod.grade).toFixed(2) : '';
                             return (
                                 <div key={idx} className={isLast ? classes.subCellRowLast : classes.subCellRow}>
                                     <div className={classes.subCellItemBordered}>{mod.codeModule + " - " + mod.nameModule}</div>
-                                    <div className={classes.subCellItem}>{mod.grade}</div>
+                                    <div className={classes.subCellItemCenter}>{gradeFormat}</div>
                                 </div>
                             );
                         })}
@@ -92,9 +100,15 @@ const Concentradora = () => {
                 );
             },
         },
-        { field: 'newCourseHistory', headerName: 'Código del curso' },
-        { field: 'newCourseHistoryName', headerName: 'Nombre del curso' },
-        { field: 'grade', headerName: 'Nota' }
+        { field: 'newCourseHistory', headerName: 'Código del curso', align: 'center', width: '160px' },
+        { field: 'newCourseHistoryName', headerName: 'Nombre del curso', minWidth: '300px' },
+        {
+            field: 'grade',
+            headerName: 'Nota',
+            align: 'center',
+            width: '100px',
+            renderCell: (row) => row.grade !== undefined && row.grade !== null ? Number(row.grade).toFixed(2) : ''
+        }
     ];
 
     let gridData = [];
@@ -107,14 +121,15 @@ const Concentradora = () => {
     return (
         <div>
             <div>
-                <h2>Concentradora</h2>
+                <h2>Concentradora Cursos de AH</h2>
 
             </div>
             <div>
                 <p>
-                    Registrar materia concentradora en historiales académicos, se debe de hacer despues de haber realizado el cierre de periodo académico
+                    Registrar materia concentradora en historiales académicos de Banner, se debe de hacer despues de haber realizado el cierre de periodo académico
                     y ejecutado el CAPP  <strong>Se migrarán las materias concentradoras a los historiales académicos de los estudiantes</strong>
                 </p>
+
 
                 {programsList && termsList && (
                     <Grid container spacing={4}>
@@ -131,8 +146,8 @@ const Concentradora = () => {
                                 renderInput={(params) => (
                                     <TextField
                                         {...params}
-                                        label="Buscar el programa"
-                                        placeholder="Escriba para filtrar..."
+                                        // label="Buscar el programa"
+                                        placeholder="Buscar el programa"
                                         variant="outlined"
                                     />
                                 )}
@@ -160,8 +175,8 @@ const Concentradora = () => {
                                 renderInput={(params) => (
                                     <TextField
                                         {...params}
-                                        label="Buscar el periodo académico abierto y que este en el rango de fechas"
-                                        placeholder="Escriba para filtrar..."
+                                        // label="Buscar el periodo académico abierto y que este en el rango de fechas"
+                                        placeholder="Buscar el periodo académico abierto y que este en el rango de fechas"
                                         variant="outlined"
                                     />
                                 )}
@@ -174,13 +189,25 @@ const Concentradora = () => {
             </div>
 
             {getCalculateConcentradora.loading && <Loading />}
-            {!getCalculateConcentradora.loading && gridData.length > 0 && (
+            {!getCalculateConcentradora.loading && gridData?.length > 0 && (
                 <div style={{ marginTop: '20px', marginBottom: '20px' }}>
                     <CustomDataGrid columns={columns} data={gridData} loading={getCalculateConcentradora.loading} />
                 </div>
             )}
-
-            <Button
+            {gridData?.length > 0 &&
+                <Button
+                    id="btnRegistrar"
+                    color="primary"
+                    fluid
+                    size="large"
+                    variant="contained"
+                    onClick={() => setOpenDialog(true)}
+                    disabled={!selectTerm || !selectPrograms}
+                >
+                    Registrar materias concentradoras en historiales académicos
+                </Button>
+            }
+            {/* <Button
                 id="btnRegistrar"
                 color="primary"
                 fluid

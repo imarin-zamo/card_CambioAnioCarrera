@@ -24,7 +24,7 @@ const CardCambioAnioCarreraCard = (props) => {
                 <p>
                     Está tarjeta permite realizar diferentes procesos académicos masivos.
                     <strong>
-                        siempre se debe de evaluar que el CAPP y cierre de periodos, calculos de GPA y creditos se hayan realizado correctamente.
+                        siempre se debe de evaluar que el CAPP, cierre de periodos, calculos de GPA y creditos se hayan realizado correctamente.
 
                     </strong>
                 </p>

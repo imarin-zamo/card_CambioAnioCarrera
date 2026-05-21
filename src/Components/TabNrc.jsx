@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { withStyles } from '@ellucian/react-design-system/core/styles';
-import { Tabs, Tab, Typography } from '@ellucian/react-design-system/core';
+import { Tabs, Tab } from '@ellucian/react-design-system/core';
 import { spacing40 } from '@ellucian/react-design-system/core/styles/tokens';
 
-import CambioAnioCarrera from './CambioAnioCarrera';
-import TabNrc from './TabNrc';
-//import CambioTipoGraduado from './CambioTipoGraduado';
+
+import Concentradora from './Concentradora';
+import SubTabNrc from './SubTabNrc';
 
 const styles = theme => ({
     root: {
@@ -20,20 +20,19 @@ const styles = theme => ({
 });
 
 const content = {
-    'Cambio de Año de Carrera': <CambioAnioCarrera />,
-    'Concentradora': <TabNrc />,
+    'Concentradora': <Concentradora />,
+    'NRC': <SubTabNrc />,
     //'All Students',
 };
 
 /**
  * Card Level Tabs without Scroll Buttons
  */
-const CardLevelTabs = (props) => {
+const TabNrc = (props) => {
     const { classes } = props;
-    console.log('CardLevelTabs props', classes);
-    //  console.log('La data es ', Data)
+    console.log('TabConcentradora props', classes);
 
-    const [tab, setTab] = useState('Cambio de Año de Carrera');
+    const [tab, setTab] = useState('Concentradora');
 
     const handleChange = (event, value) => {
         setTab(value)
@@ -42,12 +41,11 @@ const CardLevelTabs = (props) => {
     return (
         <div>
             {/* <h3>Bienvenido {userInfo} </h3> */}
-            <Typography variant="h3">
-                En esta tarjeta se pueden realizar diferentes procesos académicos, como el cambio de año de carrera y el cambio de estudiantes a graduados entre otros.
-            </Typography>
+            {/* <Typography variant="h3">
+            </Typography> */}
             <Tabs value={tab} onChange={handleChange}>
-                <Tab label="Cambio de Año de Carrera" value="Cambio de Año de Carrera" />
-                <Tab label="Concentradora AH" value="Concentradora" />
+                <Tab label="Concentradora" value="Concentradora" />
+                <Tab label="NRC" value="NRC" />
                 {/* <Tab label="All Students" value="All Students" /> */}
 
             </Tabs>
@@ -59,8 +57,8 @@ const CardLevelTabs = (props) => {
     )
 };
 
-CardLevelTabs.propTypes = {
+TabNrc.propTypes = {
     classes: PropTypes.object,
 };
 
-export default withStyles(styles)(CardLevelTabs);
+export default withStyles(styles)(TabNrc);

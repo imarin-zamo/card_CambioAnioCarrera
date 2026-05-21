@@ -13,6 +13,7 @@ import {
 } from "@ellucian/react-design-system/core";
 import { withStyles } from '@ellucian/react-design-system/core/styles';
 import { spacing20, spacing30, spacing40 } from '@ellucian/react-design-system/core/styles/tokens';
+import * as XLSX from 'xlsx';
 
 const styles = () => ({
     container: {
@@ -82,11 +83,20 @@ const styles = () => ({
         alignItems: 'center',
     },
     subCellItemBordered: {
-        flex: 1,
+        flex: 4,
         padding: spacing20,
         borderRight: '1px solid #e0e0e0',
         display: 'flex',
         alignItems: 'center',
+        whiteSpace: 'nowrap'
+    },
+    subCellItemCenter: {
+        flex: 1,
+        padding: spacing20,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        whiteSpace: 'nowrap'
     },
     paginationContainer: {
         display: 'flex',
@@ -120,6 +130,7 @@ const CustomDataGrid = ({ classes, columns, data, loading }) => {
                     if (col.field === 'module' && Array.isArray(row.module)) {
                         return row.module.some(m => 
                             String(m.codeModule).toLowerCase().includes(lowerTerm) || 
+                            String(m.nameModule).toLowerCase().includes(lowerTerm) ||
                             String(m.grade).toLowerCase().includes(lowerTerm)
                         );
                     }
@@ -151,34 +162,34 @@ const CustomDataGrid = ({ classes, columns, data, loading }) => {
     const exportToExcel = () => {
         if (!filteredData || filteredData.length === 0) return;
 
-        const headers = columns.map(col => `"${col.headerName}"`).join(",");
-        
-        const rows = filteredData.map(row => {
-            return columns.map(col => {
-                let val = "";
+        const dataForExcel = filteredData.map(row => {
+            const rowData = {};
+            columns.forEach(col => {
                 if (col.field) {
-                    val = row[col.field] ?? "";
+                    let val = row[col.field] ?? "";
                     if (col.field === 'module' && Array.isArray(val)) {
-                        val = val.map(m => `${m.codeModule}: ${m.grade}`).join(" | ");
+                        val = val.map(m => {
+                            const gradeFmt = m.grade !== undefined && m.grade !== null ? Number(m.grade).toFixed(2) : '';
+                            return `${m.codeModule} - ${m.nameModule} : ${gradeFmt}`;
+                        }).join(" | ");
+                    } else if (col.field === 'grade') {
+                         if (val !== undefined && val !== null && val !== "") {
+                             val = Number(val).toFixed(2);
+                         }
                     } else if (typeof val === 'object') {
                         val = JSON.stringify(val);
                     }
+                    rowData[col.headerName] = val;
                 }
-                val = String(val).replace(/"/g, '""');
-                return `"${val}"`;
-            }).join(",");
+            });
+            return rowData;
         });
 
-        // Agregamos el BOM para que Excel detecte correctamente la codificación UTF-8
-        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers, ...rows].join("\n");
-        const encodedUri = encodeURI(csvContent);
-        
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `reporte_concentradora_${new Date().getTime()}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const worksheet = XLSX.utils.json_to_sheet(dataForExcel);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Registros");
+
+        XLSX.writeFile(workbook, `reporte_concentradora_${new Date().getTime()}.xlsx`);
     };
 
     if (loading) {
@@ -202,7 +213,7 @@ const CustomDataGrid = ({ classes, columns, data, loading }) => {
                 </div>
                 <div className={classes.toolbarActions}>
                     <Button color="primary" onClick={exportToExcel} variant="contained">
-                        Exportar a Excel (CSV)
+                        Exportar a Excel (.xlsx)
                     </Button>
                 </div>
             </div>
@@ -212,7 +223,16 @@ const CustomDataGrid = ({ classes, columns, data, loading }) => {
                     <TableHead className={classes.tableHead}>
                         <TableRow>
                             {columns.map((col, index) => (
-                                <TableCell key={index} className={classes.tableHeadCell} style={{ color: '#fff' }}>
+                                <TableCell 
+                                    key={index} 
+                                    className={classes.tableHeadCell} 
+                                    style={{ 
+                                        color: '#fff',
+                                        textAlign: col.headerAlign || col.align || 'left',
+                                        width: col.width || 'auto',
+                                        minWidth: col.minWidth || 'auto'
+                                    }}
+                                >
                                     {col.headerName}
                                 </TableCell>
                             ))}
@@ -225,13 +245,30 @@ const CustomDataGrid = ({ classes, columns, data, loading }) => {
                                     {columns.map((col, colIndex) => {
                                         if (col.renderCell) {
                                             return (
-                                                <TableCell key={colIndex} style={col.isSubCell ? { padding: 0, height: '100%' } : {}}>
+                                                <TableCell 
+                                                    key={colIndex} 
+                                                    style={{ 
+                                                        padding: col.isSubCell ? 0 : spacing20, 
+                                                        height: '100%',
+                                                        textAlign: col.align || 'left',
+                                                        width: col.width || 'auto',
+                                                        minWidth: col.minWidth || 'auto'
+                                                    }}
+                                                >
                                                     {col.renderCell(row, classes)}
                                                 </TableCell>
                                             );
                                         }
                                         return (
-                                            <TableCell key={colIndex} className={classes.tableCell}>
+                                            <TableCell 
+                                                key={colIndex} 
+                                                className={classes.tableCell}
+                                                style={{ 
+                                                    textAlign: col.align || 'left',
+                                                    width: col.width || 'auto',
+                                                    minWidth: col.minWidth || 'auto'
+                                                }}
+                                            >
                                                 {row[col.field]}
                                             </TableCell>
                                         );
@@ -296,7 +333,11 @@ CustomDataGrid.propTypes = {
             field: PropTypes.string,
             headerName: PropTypes.string.isRequired,
             renderCell: PropTypes.func,
-            isSubCell: PropTypes.bool
+            isSubCell: PropTypes.bool,
+            align: PropTypes.string,
+            headerAlign: PropTypes.string,
+            width: PropTypes.string,
+            minWidth: PropTypes.string
         })
     ).isRequired,
     data: PropTypes.array.isRequired,
