@@ -128,8 +128,8 @@ const CustomDataGrid = ({ classes, columns, data, loading }) => {
                 if (col.field && row[col.field]) {
                     // Para el array de modulos, buscar también en su interior
                     if (col.field === 'module' && Array.isArray(row.module)) {
-                        return row.module.some(m => 
-                            String(m.codeModule).toLowerCase().includes(lowerTerm) || 
+                        return row.module.some(m =>
+                            String(m.codeModule).toLowerCase().includes(lowerTerm) ||
                             String(m.nameModule).toLowerCase().includes(lowerTerm) ||
                             String(m.grade).toLowerCase().includes(lowerTerm)
                         );
@@ -173,9 +173,9 @@ const CustomDataGrid = ({ classes, columns, data, loading }) => {
                             return `${m.codeModule} - ${m.nameModule} : ${gradeFmt}`;
                         }).join(" | ");
                     } else if (col.field === 'grade') {
-                         if (val !== undefined && val !== null && val !== "") {
-                             val = Number(val).toFixed(2);
-                         }
+                        if (val !== undefined && val !== null && val !== "") {
+                            val = Number(val).toFixed(2);
+                        }
                     } else if (typeof val === 'object') {
                         val = JSON.stringify(val);
                     }
@@ -223,10 +223,10 @@ const CustomDataGrid = ({ classes, columns, data, loading }) => {
                     <TableHead className={classes.tableHead}>
                         <TableRow>
                             {columns.map((col, index) => (
-                                <TableCell 
-                                    key={index} 
-                                    className={classes.tableHeadCell} 
-                                    style={{ 
+                                <TableCell
+                                    key={index}
+                                    className={classes.tableHeadCell}
+                                    style={{
                                         color: '#fff',
                                         textAlign: col.headerAlign || col.align || 'left',
                                         width: col.width || 'auto',
@@ -245,10 +245,10 @@ const CustomDataGrid = ({ classes, columns, data, loading }) => {
                                     {columns.map((col, colIndex) => {
                                         if (col.renderCell) {
                                             return (
-                                                <TableCell 
-                                                    key={colIndex} 
-                                                    style={{ 
-                                                        padding: col.isSubCell ? 0 : spacing20, 
+                                                <TableCell
+                                                    key={colIndex}
+                                                    style={{
+                                                        padding: col.isSubCell ? 0 : spacing20,
                                                         height: '100%',
                                                         textAlign: col.align || 'left',
                                                         width: col.width || 'auto',
@@ -260,10 +260,10 @@ const CustomDataGrid = ({ classes, columns, data, loading }) => {
                                             );
                                         }
                                         return (
-                                            <TableCell 
-                                                key={colIndex} 
+                                            <TableCell
+                                                key={colIndex}
                                                 className={classes.tableCell}
-                                                style={{ 
+                                                style={{
                                                     textAlign: col.align || 'left',
                                                     width: col.width || 'auto',
                                                     minWidth: col.minWidth || 'auto'
@@ -284,7 +284,7 @@ const CustomDataGrid = ({ classes, columns, data, loading }) => {
                         )}
                     </TableBody>
                 </Table>
-                
+
                 <div className={classes.paginationContainer}>
                     <div>
                         <Typography variant="body2" color="textSecondary">
@@ -302,18 +302,22 @@ const CustomDataGrid = ({ classes, columns, data, loading }) => {
                                 <option key={size} value={size}>{size}</option>
                             ))}
                         </select>
-                        <Button 
-                            variant="outlined" 
+                        <Button
+                            color="primary"
+                            variant="contained"
                             disabled={currentPage === 1}
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                         >
                             Anterior
                         </Button>
+
                         <Typography variant="body2" style={{ margin: '0 8px', fontWeight: 'bold' }}>
                             {currentPage} / {totalPages}
                         </Typography>
-                        <Button 
-                            variant="outlined" 
+
+                        <Button
+                            color="primary"
+                            variant="contained"
                             disabled={currentPage === totalPages}
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                         >

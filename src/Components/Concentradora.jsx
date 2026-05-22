@@ -5,16 +5,21 @@ import { Button, Autocomplete, TextField, Grid, Dialog, DialogTitle, DialogConte
 import { useZamoranoData } from '../hooks/useZamoranoData';
 import CustomDataGrid from './CustomDataGrid';
 import Loading from './Loading';
+import BoxMenssaje from './BoxMenssaje';
+import Error from './Error';
 
 const Concentradora = () => {
 
     const getPrograms = useZamoranoData();
     const getTerms = useZamoranoData();
     const getCalculateConcentradora = useZamoranoData();
+    const getLocalNrcs = useZamoranoData();
 
     const [selectPrograms, setSelectPrograms] = useState(null);
     const [selectTerm, setSelectTerm] = useState(null);
     const [openDialog, setOpenDialog] = useState(false);
+    const [validationError, setValidationError] = useState(null);
+    const [isValidating, setIsValidating] = useState(false);
 
     const programsData = Array.isArray(getPrograms.data) ? getPrograms.data : [];
 
@@ -31,6 +36,27 @@ const Concentradora = () => {
     });
     const termsList = Array.isArray(getTerms.data) ? getTerms.data : [];//getTerms.data && getTerms.data.response ? getTerms.data.response : [];
 
+
+
+    const messageData = [
+        {
+            title: 'Pasos a seguir',
+            description: `
+            1. Registrar los NRC AH en SSASECT.
+            2. Registrar los NRC en est&aacute; tarjeta en el tag de NRC.
+            3. Rolado de las Notas de los NRC, validarlas en SFASLST.
+            <strong>4. Ejecutar la Concentradora AH</strong>.
+            5. Ejecutar el calculo de promedios global para el periodo en SHRCGPA y/o recalculo de promedio en SHRGPAC.
+            6. Correr CAPP.
+            `,
+            color: 'primary.main',
+        },
+        {
+            title: 'Para tener en cuenta',
+            description: 'Cada modulo de AH debe de tener configurado los atributos de curso, sin esto los promedios no serán los correctos,antes de realizar este proceso validar cada modulo de AH tenga configurado los atributos de curso en SCADETL | atributos de grado.',
+            color: '#c93204ff',
+        }
+    ];
 
     useEffect(() => {
         //getLevels.execute('/RT/v1/academic-levels', { method: 'GET' });
@@ -67,12 +93,12 @@ const Concentradora = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectPrograms, selectTerm]);
 
-    console.log('getCalculateConcentradora', getCalculateConcentradora.data);
+    // console.log('getCalculateConcentradora', getCalculateConcentradora.data);
 
-    console.log('selectPrograms', selectPrograms);
+    // console.log('selectPrograms', selectPrograms);
 
     const columns = [
-        { field: 'bannerd', headerName: 'Banner Id', align: 'center', width: '120px' },
+        { field: 'bannerd', headerName: 'Banner Id', align: 'center', width: '150px' },
         { field: 'name', headerName: 'Nombre', minWidth: '300px' },
         { field: 'averageNumbersModules', headerName: 'Módulos evaluados', align: 'center', width: '180px' },
         { field: 'area', headerName: 'Area', align: 'center', width: '100px' },
@@ -100,7 +126,7 @@ const Concentradora = () => {
                 );
             },
         },
-        { field: 'newCourseHistory', headerName: 'Código del curso', align: 'center', width: '160px' },
+        { field: 'newCourseHistory', headerName: 'Código del curso', align: 'center', width: '200px' },
         { field: 'newCourseHistoryName', headerName: 'Nombre del curso', minWidth: '300px' },
         {
             field: 'grade',
@@ -110,6 +136,87 @@ const Concentradora = () => {
             renderCell: (row) => row.grade !== undefined && row.grade !== null ? Number(row.grade).toFixed(2) : ''
         }
     ];
+
+    const handleOpenDialog = () => {
+        setValidationError(null);
+        setOpenDialog(true);
+    };
+
+    const handleConfirmarRegistro = async () => {
+        setValidationError(null);
+        setIsValidating(true);
+
+        try {
+            const termCode = selectTerm?.code;
+            if (!termCode) {
+                setValidationError("Por favor, seleccione un período académico.");
+                setIsValidating(false);
+                return;
+            }
+
+            // Consultar los NRCs registrados localmente
+            const localRes = await getLocalNrcs.execute(`/ZA/v1/Academic/nrcAHLocal/${termCode}`, { method: 'GET' });
+
+            if (!localRes) {
+                setValidationError("Error al obtener la información de los NRC para validar.");
+                setIsValidating(false);
+                return;
+            }
+
+            const localItems = localRes.items || [];
+
+            console.log('localItems', localItems);
+            console.log('termCode', termCode);
+
+            // Determinar los cursos obligatorios según terminación del período
+            let expectedCourses = [];
+            if (termCode.endsWith('10')) {
+                expectedCourses = ["APRENDER HACIENDO I", "APRENDER HACIENDO IV", "APRENDER HACIENDO VII"];
+            } else if (termCode.endsWith('20')) {
+                expectedCourses = ["APRENDER HACIENDO II", "APRENDER HACIENDO V", "APRENDER HACIENDO VIII"];
+            } else if (termCode.endsWith('30')) {
+                expectedCourses = ["APRENDER HACIENDO III", "APRENDER HACIENDO VI", "APRENDER HACIENDO IX"];
+            }
+
+            // Comparación robusta insensible a mayúsculas y espacios
+            const matchesExpected = (item, expected) => {
+                const alias = (item.aliasCurso || "").trim().toUpperCase();
+                const titulo = (item.titulo || "").trim().toUpperCase();
+                const target = expected.trim().toUpperCase();
+                return alias === target || titulo === target;
+            };
+
+            // Filtrar los cursos que no están en el JSON devuelto
+            const missing = expectedCourses.filter(expected => {
+                return !localItems.some(item => matchesExpected(item, expected));
+            });
+
+            if (missing.length > 0) {
+                // Alerta amigable al usuario final sin usar la palabra "local" ni similares
+                const missingListStr = missing.join(', ');
+                setValidationError(`Falta registrar los siguientes NRC obligatorios: ${missingListStr} en el periodo ${termCode}`);
+                setIsValidating(false);
+                return;
+            }
+
+            // Registro final de promedios
+            const periodo = selectTerm.code;
+            const programa = selectPrograms.code;
+            const response = await getCalculateConcentradora.execute(
+                `/ZA/v1/History/ResgisterConcentratorHistoryAcacemic?periodo=${periodo}&programa=${programa}`,
+                { method: 'POST' }
+            );
+
+            if (response) {
+                alert("¡Proceso de registro finalizado con éxito!");
+                setOpenDialog(false);
+            }
+        } catch (error) {
+            setValidationError(`Ocurrió un error inesperado durante la validación: ${error.message}`);
+        } finally {
+            setIsValidating(false);
+        }
+    };
 
     let gridData = [];
     if (Array.isArray(getCalculateConcentradora.data)) {
@@ -127,10 +234,20 @@ const Concentradora = () => {
             <div>
                 <p>
                     Registrar materia concentradora en historiales académicos de Banner, se debe de hacer despues de haber realizado el cierre de periodo académico
-                    y ejecutado el CAPP  <strong>Se migrarán las materias concentradoras a los historiales académicos de los estudiantes</strong>
+                    <strong>Se migrarán las materias concentradoras a los historiales académicos de los estudiantes</strong>
                 </p>
 
 
+
+                {messageData &&
+                    messageData.map((message, index) => (
+                        <BoxMenssaje
+                            key={index}
+                            title={message.title}
+                            description={message.description}
+                            color={message.color}
+                        />
+                    ))}
                 {programsList && termsList && (
                     <Grid container spacing={4}>
 
@@ -201,7 +318,7 @@ const Concentradora = () => {
                     fluid
                     size="large"
                     variant="contained"
-                    onClick={() => setOpenDialog(true)}
+                    onClick={handleOpenDialog}
                     disabled={!selectTerm || !selectPrograms}
                 >
                     Registrar materias concentradoras en historiales académicos
@@ -218,34 +335,44 @@ const Concentradora = () => {
             >
                 Registrar materias concentradoras en historiales académicos
             </Button>
+            */}
 
             {/* Diálogo de Confirmación */}
             <Dialog
                 open={openDialog}
-                onClose={() => setOpenDialog(false)}
+                onClose={() => !isValidating && setOpenDialog(false)}
             >
                 <DialogTitle>¿Confirmar Registro de Materias?</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
                         Está a punto de registrar la materia concentradora en los historiales académicos de los estudiantes.
-                        Asegúrese de ejecutar este proceso <strong>únicamente</strong> si ya ha finalizado el cierre de periodo académico y ejecutado el proceso CAPP.
+                        Asegúrese de ejecutar este proceso <strong>únicamente si ya ha finalizado el enrolado de NRC y el cierre de periodo académicos</strong>
                         <br /><br />
                         ¿Está completamente seguro de que desea continuar con el registro?
                     </DialogContentText>
+                    {isValidating && <Loading />}
+                    {validationError && (
+                        <Error alertText={validationError} />
+                    )}
+                    {getLocalNrcs.error && (
+                        <Error alertText={`Error al consultar NRCs: ${getLocalNrcs.error}`} />
+                    )}
+                    {getCalculateConcentradora.error && (
+                        <Error alertText={`Error al registrar materias: ${getCalculateConcentradora.error}`} />
+                    )}
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setOpenDialog(false)} color="secondary">
+                    <Button onClick={() => setOpenDialog(false)} color="secondary" disabled={isValidating}>
                         Cancelar
                     </Button>
                     <Button
-                        onClick={() => {
-                            setOpenDialog(false);
-                            alert("¡Proceso de registro iniciado!"); // Esto se reemplazará por la llamada a la API
-                        }}
+                        id="btnConfirmarRegistro"
+                        onClick={handleConfirmarRegistro}
                         color="primary"
                         variant="contained"
+                        disabled={isValidating || !!validationError || getLocalNrcs.loading || getCalculateConcentradora.loading}
                     >
-                        Confirmar y Registrar
+                        {isValidating ? 'Validando...' : 'Confirmar y Registrar'}
                     </Button>
                 </DialogActions>
             </Dialog>

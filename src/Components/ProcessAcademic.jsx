@@ -20,8 +20,8 @@ const styles = theme => ({
 });
 
 const content = {
-    'Cambio de Año de Carrera': <CambioAnioCarrera />,
     'Concentradora': <TabNrc />,
+    'Cambio de Año de Carrera': <CambioAnioCarrera />,
     //'All Students',
 };
 
@@ -33,7 +33,7 @@ const CardLevelTabs = (props) => {
     console.log('CardLevelTabs props', classes);
     //  console.log('La data es ', Data)
 
-    const [tab, setTab] = useState('Cambio de Año de Carrera');
+    const [tab, setTab] = useState('Concentradora');
 
     const handleChange = (event, value) => {
         setTab(value)
@@ -46,8 +46,8 @@ const CardLevelTabs = (props) => {
                 En esta tarjeta se pueden realizar diferentes procesos académicos, como el cambio de año de carrera y el cambio de estudiantes a graduados entre otros.
             </Typography>
             <Tabs value={tab} onChange={handleChange}>
-                <Tab label="Cambio de Año de Carrera" value="Cambio de Año de Carrera" />
                 <Tab label="Concentradora AH" value="Concentradora" />
+                <Tab label="Cambio de Año de Carrera" value="Cambio de Año de Carrera" />
                 {/* <Tab label="All Students" value="All Students" /> */}
 
             </Tabs>

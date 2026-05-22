@@ -10,12 +10,16 @@ import {
     DialogContentText,
     DialogActions
 } from '@ellucian/react-design-system/core';
+
 import { useZamoranoData } from '../hooks/useZamoranoData';
 import CustomDataGrid from './CustomDataGrid';
 import Loading from './Loading';
 import Error from './Error';
 
+
 const NrcCrudTermCode = () => {
+
+
     const getTerms = useZamoranoData();
     const getNrcAHLocalByTerm = useZamoranoData();
 
@@ -235,15 +239,15 @@ const NrcCrudTermCode = () => {
             renderCell: (row) => (
                 <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                     <Button
-                        color="primary"
-                        variant="outlined"
+                        color="secondary"
+                        variant="contained"
                         size="small"
                         onClick={() => handleOpenUpdateDialog(row)}
                     >
                         Actualizar
                     </Button>
                     <Button
-                        color="secondary"
+                        color="primary"
                         variant="contained"
                         size="small"
                         onClick={() => handleOpenDeleteDialog(row)}
@@ -255,13 +259,14 @@ const NrcCrudTermCode = () => {
         }
     ];
 
+
     const nrcGridData = getNrcAHLocalByTerm.data?.items || [];
     const concentratoraOptions = getNrcByConcentrator.data?.items || [];
 
     return (
         <div style={{ marginTop: '20px' }}>
             <p>
-                Registrar NRC de forma local. Seleccione el período académico para consultar los NRCs locales disponibles.
+                Registrar NRC. Seleccione el período académico para consultar los NRCs disponibles.
             </p>
 
             {getTerms.error && (
@@ -314,7 +319,7 @@ const NrcCrudTermCode = () => {
             {getNrcAHLocalByTerm.loading && <Loading />}
 
             {getNrcAHLocalByTerm.error && (
-                <Error alertText={`Error al obtener NRCs locales: ${getNrcAHLocalByTerm.error}`} />
+                <Error alertText={`Error al obtener NRCs: ${getNrcAHLocalByTerm.error}`} />
             )}
 
             {!getNrcAHLocalByTerm.loading && nrcGridData.length > 0 && (
@@ -340,12 +345,12 @@ const NrcCrudTermCode = () => {
                 maxWidth="sm"
                 fullWidth
             >
-                <DialogTitle>{isEdit ? 'Actualizar NRC Local' : 'Agregar NRC Local'}</DialogTitle>
+                <DialogTitle>{isEdit ? 'Actualizar NRC' : 'Agregar NRC'}</DialogTitle>
                 <DialogContent>
                     <DialogContentText style={{ marginBottom: '15px' }}>
                         {isEdit
-                            ? 'Seleccione el nuevo NRC de la concentradora para actualizar el registro local.'
-                            : 'Seleccione un NRC de la concentradora para registrarlo localmente en este período.'
+                            ? 'Seleccione el nuevo NRC de la concentradora para actualizar el registro.'
+                            : 'Seleccione un NRC de la concentradora para registrarlo en este período.'
                         }
                     </DialogContentText>
 
@@ -356,11 +361,11 @@ const NrcCrudTermCode = () => {
                     )}
 
                     {postNrc.error && (
-                        <Error alertText={`Error al registrar NRC local: ${postNrc.error}`} />
+                        <Error alertText={`Error al registrar NRC: ${postNrc.error}`} />
                     )}
 
                     {putNrc.error && (
-                        <Error alertText={`Error al actualizar NRC local: ${putNrc.error}`} />
+                        <Error alertText={`Error al actualizar NRC: ${putNrc.error}`} />
                     )}
 
                     {!getNrcByConcentrator.loading && !getNrcByConcentrator.error && (
@@ -408,15 +413,15 @@ const NrcCrudTermCode = () => {
                 open={openDeleteDialog}
                 onClose={() => setOpenDeleteDialog(false)}
             >
-                <DialogTitle>¿Confirmar eliminación de NRC Local?</DialogTitle>
+                <DialogTitle>¿Confirmar eliminación de NRC?</DialogTitle>
                 <DialogContent>
                     {deleteNrc.error && (
                         <Error alertText={`Error al eliminar: ${deleteNrc.error}`} />
                     )}
                     <DialogContentText>
-                        ¿Está realmente seguro de que desea eliminar el NRC local <strong>{deletingRow?.nrc}</strong> ({deletingRow?.materia}{deletingRow?.numeroCurso} - {deletingRow?.aliasCurso}) para el período <strong>{deletingRow?.periodo}</strong>?
+                        ¿Está realmente seguro de que desea eliminar el NRC <strong>{deletingRow?.nrc}</strong> ({deletingRow?.materia}{deletingRow?.numeroCurso} - {deletingRow?.aliasCurso}) para el período <strong>{deletingRow?.periodo}</strong>?
                         <br /><br />
-                        Esta acción es irreversible y removerá el registro del listado local.
+                        Esta acción es irreversible y removerá el registro.
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
