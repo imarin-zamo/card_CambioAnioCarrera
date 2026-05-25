@@ -18,6 +18,8 @@
     "@ellucian/experience-extension-utils": "https://cdn.elluciancloud.com/assets/SDK/utils/1.0.0/ellucian-experience-extension-utils-1.0.0.tgz",
     "@ellucian/react-design-system": "https://cdn.elluciancloud.com/assets/EDS2/7.19.0/umd/path_design_system.tgz",
     "dotenv-webpack": "^8.1.1",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "prop-types": "15.7.2",
     "react": "17.0.2",
     "react-dom": "17.0.2",

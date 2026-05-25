@@ -217,19 +217,19 @@ const NrcCrudTermCode = () => {
         },
         { field: 'periodo', headerName: 'Periodo', align: 'center', width: '100px' },
         { field: 'creditos', headerName: 'Créditos', align: 'center', width: '90px' },
-        {
-            field: 'estado',
-            headerName: 'Estado',
-            align: 'center',
-            width: '100px',
-            renderCell: (row) => row.estado ? "Activo" : "Inactivo"
-        },
+        // {
+        //     field: 'estado',
+        //     headerName: 'Estado',
+        //     align: 'center',
+        //     width: '100px',
+        //     renderCell: (row) => row.estado ? "Activo" : "Inactivo"
+        // },
         {
             field: 'estadoNRC',
             headerName: 'Estado NRC',
             align: 'center',
             width: '120px',
-            renderCell: (row) => row.estadoNRC ? "Sincronizado" : "No Sincronizado"
+            renderCell: (row) => row.estadoNRC ? "Activo" : "Inactivo"
         },
         {
             field: 'acciones',

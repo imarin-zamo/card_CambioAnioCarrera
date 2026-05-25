@@ -19,7 +19,7 @@ const styles = theme => ({
 });
 
 const content = {
-    'Sincronizar NRC': <NrcCrudTermCode />,
+    'Vincular NRC': <NrcCrudTermCode />,
     'Historial de NRC': <HistoryNrc />,
     //'All Students',
 };
@@ -31,7 +31,7 @@ const SubTabNrc = (props) => {
     const { classes } = props;
     console.log('SubTabNrc props', classes);
 
-    const [tab, setTab] = useState('Sincronizar NRC');
+    const [tab, setTab] = useState('Vincular NRC');
 
     const handleChange = (event, value) => {
         setTab(value)
@@ -43,7 +43,7 @@ const SubTabNrc = (props) => {
             {/* <Typography variant="h3">
             </Typography> */}
             <Tabs value={tab} onChange={handleChange} indicatorColor="primary" textColor="primary">
-                <Tab label="Sincronizar NRC" value="Sincronizar NRC" />
+                <Tab label="Vincular NRC" value="Vincular NRC" />
                 <Tab style={{ fontSize: '1rem' }} label="Historial de NRC" value="Historial de NRC" />
                 {/* <Tab label="All Students" value="All Students" /> */}
 
